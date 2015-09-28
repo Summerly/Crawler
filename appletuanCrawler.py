@@ -12,6 +12,14 @@ data = urllib.request.urlopen(dailyPriceURL).read()
 
 dailyPriceFile = open('dailyPrice.txt', 'wb')
 
-dailyPriceFile.write(data)
+pattern = b'<a class="rabel topic" href="(/t/\d*)">(.*\s)</a>'
+
+titles = re.findall(pattern, data)
+
+for title in titles:
+    dailyPriceFile.write(url.encode(encoding='UTF-8') + title[0])
+    dailyPriceFile.write(title[1])
 
 dailyPriceFile.close()
+
+
