@@ -4,22 +4,46 @@ import urllib.request
 import os
 import re
 
-url = 'http://www.appletuan.com/'
+def open_url(url):
+    response = urllib.request.urlopen(url)
+    return response.read()
 
-dailyPriceURL = 'http://www.appletuan.com/go/dailyprice'
+def find_image(data):
+    pattern = b'<img src="(.*?\.(png|jpg))" class="external" />'
+    img_address = re.findall(pattern, data)
+    return img_address
 
-data = urllib.request.urlopen(dailyPriceURL).read()
+def save_image(img_address, filename):
+    for address in img_address:
+        image = open_url(address[0].decode('UTF-8'))
+        with open(filename, 'wb') as file:
+            file.write(image)
+            file.close()
 
-dailyPriceFile = open('dailyPrice.txt', 'wb')
+if __name__ == '__main__':
+    url = 'http://www.appletuan.com'
 
-pattern = b'<a class="rabel topic" href="(/t/\d*)">(.*\s)</a>'
+    dailyPriceURL = 'http://www.appletuan.com/go/dailyprice'
+    data = open_url(dailyPriceURL)
 
-titles = re.findall(pattern, data)
+    dailyPriceFile = open('dailyPrice.txt', 'wb')
 
-for title in titles:
-    dailyPriceFile.write(url.encode(encoding='UTF-8') + title[0])
-    dailyPriceFile.write(title[1])
+    pattern = b'<a class="rabel topic" href="(/t/\d*)">(.*\s)</a>'
 
-dailyPriceFile.close()
+    titles = re.findall(pattern, data)
 
+    for title in titles:
+        tempURL = url.encode(encoding='UTF-8') + title[0]
+
+        tempData = open_url(tempURL.decode('ASCII'))
+        addresses = find_image(tempData)
+        for address in addresses:
+            dailyPriceFile.write(address[0] + '\n'.encode('utf-8'))
+
+        # save_image(addresses, title[1])
+        dailyPriceFile.write(tempURL + '\n'.encode('utf-8'))
+        dailyPriceFile.write(title[1] + '\n'.encode('utf-8'))
+
+
+    dailyPriceFile.close()
 
