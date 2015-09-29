@@ -5,7 +5,9 @@ import os
 import re
 
 def open_url(url):
-    response = urllib.request.urlopen(url)
+    req = urllib.request.Request(url)
+    req.add_header('User-Agent', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:36.0) Gecko/20100101 Firefox/36.0')
+    response = urllib.request.urlopen(req)
     return response.read()
 
 def find_image(data):
@@ -14,23 +16,21 @@ def find_image(data):
     return img_address
 
 def save_image(img_address, filename):
-    for address in img_address:
-        image = open_url(address[0].decode('UTF-8'))
-        with open(filename, 'wb') as file:
-            file.write(image)
-            file.close()
+    image = open_url(img_address)
+    filename = img_address.split('/')[-1]
+    print(filename)
+    with open(filename, 'wb') as file:
+        file.write(image)
+        file.close()
 
-if __name__ == '__main__':
-    url = 'http://www.appletuan.com'
+def download_images(url, titles):
+    dirname = 'downloads'
 
-    dailyPriceURL = 'http://www.appletuan.com/go/dailyprice'
-    data = open_url(dailyPriceURL)
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
 
-    dailyPriceFile = open('dailyPrice.txt', 'wb')
-
-    pattern = b'<a class="rabel topic" href="(/t/\d*)">(.*\s)</a>'
-
-    titles = re.findall(pattern, data)
+    if os.path.dirname(os.getcwd()) != dirname:
+        os.chdir(dirname)
 
     for title in titles:
         tempURL = url.encode(encoding='UTF-8') + title[0]
@@ -38,12 +38,21 @@ if __name__ == '__main__':
         tempData = open_url(tempURL.decode('ASCII'))
         addresses = find_image(tempData)
         for address in addresses:
-            dailyPriceFile.write(address[0] + '\n'.encode('utf-8'))
+            save_image(address[0].decode('utf-8'), title[1])
 
-        # save_image(addresses, title[1])
-        dailyPriceFile.write(tempURL + '\n'.encode('utf-8'))
-        dailyPriceFile.write(title[1] + '\n'.encode('utf-8'))
+if __name__ == '__main__':
+    url = 'http://www.appletuan.com'
+
+    dailyPriceURL = 'http://www.appletuan.com/go/dailyprice'
+    data = open_url(dailyPriceURL)
+    pattern = b'<a class="rabel topic" href="(/t/\d*)">(.*\s)</a>'
+    titles = re.findall(pattern, data)
+
+    download_images(url, titles)
 
 
-    dailyPriceFile.close()
+
+
+
+
 
